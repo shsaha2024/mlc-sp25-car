@@ -6,17 +6,27 @@ from sklearn.linear_model import LinearRegression
 def model_4(transactions_df):
     """
     input: merged transaction data on category 4
+    output: Series of predictions indexed by masked_consumer_id
     """
     transactions_df = transactions_df[transactions_df['posted_date'] < transactions_df['evaluation_date']]
+    
     trans_features = make_transaction_features(transactions_df)
     weekly_features = make_weekly_features(transactions_df)
+    
     weekly_features['masked_consumer_id'] = weekly_features['masked_consumer_id'].astype(str)
     trans_features['masked_consumer_id'] = trans_features['masked_consumer_id'].astype(str)
+
     features_df = weekly_features.merge(trans_features, how='left', on='masked_consumer_id')
+    features_df.set_index('masked_consumer_id', inplace=True)
+
     model = xgb.Booster({'nthread': 4})
     model.load_model('./models/model04.json')
-    pred = model.predict(xgb.DMatrix(features_df.set_index('masked_consumer_id')))  
-    return pred
+
+    dmatrix = xgb.DMatrix(features_df)
+    pred = model.predict(dmatrix)
+
+    # Return predictions as a Series indexed by masked_consumer_id
+    return pd.Series(pred, index=features_df.index, name='prediction')
 
 def make_transaction_features(transactions):
     tx = transactions.copy()
