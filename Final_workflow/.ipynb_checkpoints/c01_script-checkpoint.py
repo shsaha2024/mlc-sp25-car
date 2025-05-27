@@ -135,6 +135,8 @@ def make_weekly_features(tx: pd.DataFrame,
         parts.append(agg_roll)
 
     final = pd.concat(parts, axis=1).fillna(0)
+    # flatten tuple column names to strings
+    final.columns = ['_'.join(map(str, c)) if isinstance(c, tuple) else c for c in final.columns]
     print(f" -> {final.shape}")
     return final
 
