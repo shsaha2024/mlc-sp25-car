@@ -20,7 +20,7 @@ def model_4(transactions_df):
     features_df.set_index('masked_consumer_id', inplace=True)
 
     model = xgb.Booster({'nthread': 4})
-    model.load_model('./models/model04.json')
+    model.load_model('manat_workflow/models/model04.json')
 
     dmatrix = xgb.DMatrix(features_df)
     pred = model.predict(dmatrix)
