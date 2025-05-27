@@ -13,7 +13,7 @@ from typing import Optional, Dict
 from sklearn.linear_model import LinearRegression
 
 # Number of simulations per positive consumer
-N_SIMULATIONS = 20
+N_SIMULATIONS = 30
 
 
 def read_parquet_auto(path: str) -> pd.DataFrame:
@@ -197,7 +197,7 @@ def main():
         eval_date = consumer.loc[cid, 'evaluation_date'] if 'evaluation_date' in consumer.columns else pd.NaT
         for sim in range(1, N_SIMULATIONS+1):
             sim_tx = tx_cons.copy()
-            noise_scale = sim_tx['amount'].std()*0.1
+            noise_scale = sim_tx['amount'].std()*0.05
             sim_tx['amount'] = sim_tx['amount'] + np.random.normal(0, noise_scale, size=sim_tx.shape[0])
             agg_sim  = make_transaction_features(sim_tx).loc[cid].to_dict()
             week_sim = make_weekly_features(sim_tx).loc[cid].to_dict()
