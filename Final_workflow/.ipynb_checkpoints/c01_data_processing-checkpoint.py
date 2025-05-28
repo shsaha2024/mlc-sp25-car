@@ -2,8 +2,7 @@
 # feature_pipeline_with_prefixes.py
 
 """
-Feature engineering pipeline with distinct prefixes per block and simulations,
-carrying evaluation_date into simulated rows to maintain dtype consistency.
+Feature engineering pipeline with distinct prefixes per block.
 """
 
 import sys
@@ -14,8 +13,6 @@ from scipy.stats import entropy
 from typing import Optional, Dict
 from sklearn.linear_model import LinearRegression
 
-# Number of simulations per positive consumer
-N_SIMULATIONS = 20
 
 def read_parquet_auto(path: str) -> pd.DataFrame:
     print(f"Loading parquet: {path}")
@@ -31,41 +28,39 @@ def read_parquet_auto(path: str) -> pd.DataFrame:
     print(f"ERROR: could not read {path}. Install pyarrow or fastparquet.")
     sys.exit(1)
 
+
 def weekly_trimmed(ts: pd.Series) -> pd.Series:
     ts2 = ts.groupby(ts.index).sum().asfreq('D').fillna(0)
     if ts2.empty:
         return ts2
     first = ts2.index[0] + pd.DateOffset(days=(7 - ts2.index[0].weekday()) % 7)
-    last  = ts2.index[-1] - pd.DateOffset(days=(ts2.index[-1].weekday() + 1) % 7)
+    last = ts2.index[-1] - pd.DateOffset(days=(ts2.index[-1].weekday() + 1) % 7)
     ts2 = ts2[(ts2.index >= first) & (ts2.index <= last)]
     return ts2.resample('W-MON').sum()
 
-def extract_fft_features(ts: pd.Series,
-                         detrend: bool=True,
-                         low_freq_cut: float=0.05,
-                         high_freq_cut: float=0.25) -> Optional[Dict[str,float]]:
+
+def extract_fft_features(ts: pd.Series, detrend: bool = True, low_freq_cut: float = 0.05, high_freq_cut: float = 0.25) -> Optional[Dict[str, float]]:
     series = ts.asfreq('W-MON').fillna(0)
     if detrend:
         series = series - series.mean()
-    vals    = series.values
-    freqs   = np.fft.fftfreq(len(vals), d=1)
-    fft_vals= np.fft.fft(vals)
-    pos     = freqs > 0
-    freqs   = freqs[pos]
-    power   = np.abs(fft_vals[pos])**2
-    total   = power.sum()
+    vals = series.values
+    freqs = np.fft.fftfreq(len(vals), d=1)
+    fft_vals = np.fft.fft(vals)
+    pos = freqs > 0
+    freqs = freqs[pos]
+    power = np.abs(fft_vals[pos])**2
+    total = power.sum()
     if total == 0:
         return None
-    p_norm  = power / total
-    idx     = int(np.argmax(power))
+    p_norm = power / total
+    idx = int(np.argmax(power))
     return {
-        'fft_dominant_freq':    freqs[idx],
-        'fft_dominant_power':   power[idx],
+        'fft_dominant_freq': freqs[idx],
+        'fft_dominant_power': power[idx],
         'fft_spectral_entropy': entropy(p_norm),
-        'fft_low_freq_power':   power[freqs < low_freq_cut].sum(),
-        'fft_high_freq_power':  power[freqs > high_freq_cut].sum(),
-        'fft_power_ratio':      power[freqs < low_freq_cut].sum() /
-                                (power[freqs > high_freq_cut].sum() + 1e-6)
+        'fft_low_freq_power': power[freqs < low_freq_cut].sum(),
+        'fft_high_freq_power': power[freqs > high_freq_cut].sum(),
+        'fft_power_ratio': power[freqs < low_freq_cut].sum() / (power[freqs > high_freq_cut].sum() + 1e-6)
     }
 
 def make_transaction_features(transactions: pd.DataFrame) -> pd.DataFrame:
@@ -362,7 +357,7 @@ def make_weekly_features(tx: pd.DataFrame,
     print(f" -> {final.shape}")
     return final
 
-def compute_fft_for_tx(tx_consumer: pd.DataFrame) -> Dict[str,float]:
+def compute_fft_for_tx(tx_consumer: pd.DataFrame) -> Dict[str, float]:
     feats = {}
     for cat, sub in tx_consumer.groupby('category'):
         ts = weekly_trimmed(sub.set_index('posted_date')['amount'])
@@ -370,16 +365,17 @@ def compute_fft_for_tx(tx_consumer: pd.DataFrame) -> Dict[str,float]:
             continue
         ff = extract_fft_features(ts)
         if ff:
-            feats.update({f'{k}_cat{cat}': v for k,v in ff.items()})
+            feats.update({f'{k}_cat{cat}': v for k, v in ff.items()})
     return feats
+
 
 def main():
     consumer_file = '/Users/jasonc/Desktop/DSC_291/cashflow/consumer_data.parquet'
-    tx_file       = '/Users/jasonc/Desktop/DSC_291/cashflow/transactions.parquet'
-    out_file      = '/Users/jasonc/Desktop/DSC_291/merged_features.parquet'
+    tx_file = '/Users/jasonc/Desktop/DSC_291/cashflow/transactions.parquet'
+    out_file = '/Users/jasonc/Desktop/DSC_291/merged_features.parquet'
 
     consumer = read_parquet_auto(consumer_file).set_index('masked_consumer_id')
-    tx       = read_parquet_auto(tx_file)
+    tx = read_parquet_auto(tx_file)
 
     print("Merging evaluation_date into tx if present...")
     if 'evaluation_date' in consumer.columns:
@@ -392,18 +388,18 @@ def main():
 
     # Filter to C01 group
     consumer = consumer[consumer.index.str.startswith('C01')]
-    tx       = tx[tx['masked_consumer_id'].isin(consumer.index)]
+    tx = tx[tx['masked_consumer_id'].isin(consumer.index)]
     print(f"Filtered: {consumer.shape[0]} consumers, {tx.shape[0]} transactions")
 
     # Real features
-    agg_df  = make_transaction_features(tx).set_index('masked_consumer_id')
+    agg_df = make_transaction_features(tx).set_index('masked_consumer_id')
     week_df = make_weekly_features(tx)
 
     # FFT features
     print("Calculating FFT Features...")
     fft_rows = []
     for cid in tx['masked_consumer_id'].unique():
-        feats = compute_fft_for_tx(tx[tx['masked_consumer_id']==cid])
+        feats = compute_fft_for_tx(tx[tx['masked_consumer_id'] == cid])
         feats['masked_consumer_id'] = cid
         fft_rows.append(feats)
     fft_df = pd.DataFrame(fft_rows).set_index('masked_consumer_id').fillna(0)
@@ -416,86 +412,11 @@ def main():
         real['FPF_TARGET'] = consumer['FPF_TARGET']
     print(f"Real merged: {real.shape}")
 
-    # ─── SIMULATION BLOCK ────────────────────────────────────────────────────────
-    sim_list = []
-    pos_ids = real.loc[real['FPF_TARGET'] == 1].index
-    print(f"Simulating {N_SIMULATIONS} per {len(pos_ids)} positive IDs...")
-
-    for cid in pos_ids:
-        tx_cons = tx[tx['masked_consumer_id'] == cid]
-
-        # Fix 1: require a minimum number of transactions
-        if len(tx_cons) < 10:
-            print(f"Skipping all sims for {cid}: only {len(tx_cons)} transactions.")
-            continue
-
-        # Fix 2: require some variation
-        raw_std = tx_cons['amount'].std()
-        if pd.isna(raw_std) or raw_std == 0:
-            print(f"Skipping all sims for {cid}: no variation (std={raw_std}).")
-            continue
-
-        eval_date = consumer.at[cid, 'evaluation_date'] if 'evaluation_date' in consumer.columns else pd.NaT
-
-        for sim in range(1, N_SIMULATIONS + 1):
-            sim_tx = tx_cons.copy()
-            if sim_tx.empty:
-                print(f"  • Sim {sim} for {cid}: empty data → skip")
-                continue
-
-            # add noise
-            noise_scale = sim_tx['amount'].std() * 0.1
-            if pd.isna(noise_scale) or noise_scale == 0:
-                print(f"  • Sim {sim} for {cid}: invalid noise_scale={noise_scale} → skip")
-                continue
-            sim_tx['amount'] += np.random.normal(0, noise_scale, size=len(sim_tx))
-
-            # aggregate features
-            agg_df = make_transaction_features(sim_tx).set_index('masked_consumer_id')
-            if cid not in agg_df.index:
-                print(f"  • Sim {sim}: agg missing → tx.shape={sim_tx.shape}, noise={noise_scale}")
-                continue
-            agg_feats = agg_df.loc[cid].to_dict()
-
-            # weekly features
-            week_df = make_weekly_features(sim_tx).set_index('masked_consumer_id')
-            if cid not in week_df.index:
-                print(f"  • Sim {sim}: weekly missing → week_idx={week_df.index.tolist()}")
-                continue
-            week_feats = week_df.loc[cid].to_dict()
-
-            # FFT features (may return empty dict)
-            fft_feats = compute_fft_for_tx(sim_tx)
-
-            # build the row
-            sim_list.append({
-                'masked_consumer_id': f"{cid}_sim{sim}",
-                'evaluation_date': eval_date,
-                'FPF_TARGET': 1,
-                'dataset_type': 'simulation',
-                **agg_feats,
-                **week_feats,
-                **fft_feats
-            })
-
-    # finalize
-    if sim_list:
-        sim_df = pd.DataFrame(sim_list).set_index('masked_consumer_id').fillna(0)
-        print(f"-> Simulated rows: {sim_df.shape}")
-    else:
-        sim_df = pd.DataFrame()
-        print("-> No valid simulations created.")
-    # ─────────────────────────────────────────────────────────────────────────────
-
-
-
-    # Final concat & save
-    real   = real.loc[:, ~real.columns.duplicated()]
-    sim_df = sim_df.loc[:, ~sim_df.columns.duplicated()]
-    final  = pd.concat([real, sim_df], axis=0).fillna(0)
+    # Final save
+    real = real.loc[:, ~real.columns.duplicated()]
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
-    final.to_parquet(out_file)
-    print(f"Saved final dataset: {final.shape} -> {out_file}")
+    real.to_parquet(out_file)
+    print(f"Saved final dataset: {real.shape} -> {out_file}")
 
 if __name__ == '__main__':
     main()
