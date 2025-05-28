@@ -265,21 +265,10 @@ def make_weekly_features(
     return final_feats
 
 def make_transaction_features_with_weekly(transactions, consumer_ids):
-    df = transactions[transactions['masked_consumer_id'].isin(consumer_ids)]
-    base_feats = make_transaction_features(df)
-    weekly_feats = make_weekly_features(df)
+    base_feats = make_transaction_features(transactions[transactions['masked_consumer_id'].isin(consumer_ids)])
+    weekly_feats = make_weekly_features(transactions[transactions['masked_consumer_id'].isin(consumer_ids)])
     final = base_feats \
     .merge(weekly_feats, on='masked_consumer_id', how='left') \
     .fillna(0)
-    cats = transactions['category'].unique()
-    for cat in cats:
-        cat_df = df[df['category'] == cat]
-        if not cat_df.empty:
-            cat_feats = make_transaction_features(cat_df, category=True)
-            final = final.merge(cat_feats, on='masked_consumer_id', how='left', suffixes=('', f'_cat_{cat}'))
-    return final
 
-def model_pred(model, X_val, threshold=0.5):
-    y_val_proba = model.predict_proba(X_val)[:, 1]
-    predictions = (y_val_proba > threshold).astype(int)
-    return predictions
+    return final
