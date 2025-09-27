@@ -1,4 +1,4 @@
-Find the report [here]([https://forms.gle/giucmSFyYQiBjL1S6](https://drive.google.com/file/d/1MC-PP57bvYaZQTbKqghoQttn2cJBnSaL/view?usp=sharing)).
+Find the report [here]([https://drive.google.com/file/d/1MC-PP57bvYaZQTbKqghoQttn2cJBnSaL/view?usp=sharing]).
 ```
 # ML Competitions: Models & Scoring
 
