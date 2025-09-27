@@ -22,7 +22,7 @@ Then install the repostory code in your environment:
 ```bash
 git clone https://github.com/{your fork}/mlc.git
 pip install -e mlc
-```
+
 
 ## Submission Template Instructions
 
