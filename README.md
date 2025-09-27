@@ -1,3 +1,5 @@
+Find the report [here]([https://forms.gle/giucmSFyYQiBjL1S6](https://drive.google.com/file/d/1MC-PP57bvYaZQTbKqghoQttn2cJBnSaL/view?usp=sharing)).
+```
 # ML Competitions: Models & Scoring
 
 ## Competition Submission Form
@@ -95,6 +97,7 @@ model = ScorableModel() # error will be raised if the above is not implemented c
 ## DSMLP
 
 [Slides](https://docs.google.com/presentation/d/1NAEO91toHvFN9y_7jojfs3pxln0MkH4YhGTNdSVj6xU/edit?usp=sharing)
+```
 on DSMLP.
 
 - How to login
