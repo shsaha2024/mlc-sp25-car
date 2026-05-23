@@ -49,8 +49,8 @@ Model performance was evaluated using the minimum Area Under the ROC Curve (AUC)
 
 | Client | Best Model | Validation AUC | Test AUC | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| **C01** | XGBoost (All 521 Features) | **0.7621** | - | Comprehensive feature set outperformed reduced sets. |
-| **C02** | XGBoost (Top 144 Features)| **0.8177** | - | Feature selection significantly improved performance. |
+| **C01** | XGBoost (All 521 Features) | **0.7621** | 0.776 | Comprehensive feature set outperformed reduced sets. |
+| **C02** | XGBoost (Top 144 Features)| **0.8177** | 0.766 | Feature selection significantly improved performance. |
 | **C03** | XGBoost (Top 125 Features)| **0.7650** | 0.805 | Heavily benefited from Spectral Analysis (FFT) features. |
 | **C04** | XGBoost (Full Feature Set) | **0.7600** | 0.623 | Experienced distributional shift on test data. |
 
