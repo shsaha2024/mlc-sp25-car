@@ -1,9 +1,5 @@
 # A Cashflow-Based Machine Learning Model for Scoring Credit-Invisible Consumers
 
-[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![XGBoost](https://img.shields.io/badge/XGBoost-enabled-orange.svg)](https://xgboost.ai/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
 ## Abstract
 We develop a cashflow-based credit scoring model to assess default risk for 'credit invisible' consumers who lack traditional credit histories. Using transaction data from checking and savings accounts, we extract features that capture spending patterns, volatility, and temporal trends. In addition to standard aggregations, we apply spectral analysis via a Fast Fourier Transform (FFT) to uncover periodic financial behavior. Our models, trained per loan product using XGBoost, demonstrate reasonable accuracy and offer a promising approach for inclusive credit risk assessment.
 
@@ -27,7 +23,7 @@ The dataset spans four different lending institutions (`C01`, `C02`, `C03`, `C04
 
 > **Note:** To prevent data leakage, only transactions occurring *before* the evaluation date were used for model training and inference.
 
-## 🛠️ Methodology & Feature Engineering
+## Methodology & Feature Engineering
 Our pipeline was systematically developed for each client, focusing heavily on robust feature engineering to quantify financial stability, spending habits, and income volatility.
 
 ### Key Feature Categories
