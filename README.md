@@ -61,10 +61,10 @@ Model performance was evaluated using the minimum Area Under the ROC Curve (AUC)
   - Future iterations must address temporal distributional shifts (observed in `C04`) by employing out-of-time validation sets and resampling techniques to account for changing macroeconomic conditions.
 
 ## Contributors
-- **Joey Kaminsky**
-- **Jason Chen**
 - **Manat Rao**
 - **Shubham Saha**
 - **Zhaolong Han**
+- **Jason Chen**
+- **Joey Kaminsky**
 
 *University of California, San Diego (UC San Diego)*
